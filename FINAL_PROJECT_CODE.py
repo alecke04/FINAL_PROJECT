@@ -30,9 +30,8 @@ class SPIDAMApp:
         self.plot_waveform_button = tk.Button(root, text='Plot Waveform', command=self.plot_waveform)
         self.plot_waveform_button.pack()
 
-        # GUI improvement: added a quit button for better user experience
-        self.quit_button = tk.Button(root, text='Quit', command=root.quit)
-        self.quit_button.pack()
+        self.plot_rt60_button = tk.Button(root, text='Plot RT60 (Low, Mid, High)', command=self.plot_rt60)
+        self.plot_rt60_button.pack()
 
     def load_audio(self):
         file_path = filedialog.askopenfilename(filetypes=[('Audio Files', '*.wav *.mp3 *.m4a')])
@@ -72,9 +71,46 @@ class SPIDAMApp:
             plt.ylabel('Amplitude')
             plt.show()
 
+    def plot_rt60(self):
+        if hasattr(self, 'audio'):
+            # Calculate RT60 for different frequency bands
+            rt60_low = self.calculate_rt60(self.audio, self.sr, (60, 250))
+            rt60_mid = self.calculate_rt60(self.audio, self.sr, (800, 1200))
+            rt60_high = self.calculate_rt60(self.audio, self.sr, (5000, 10000))
+
+            # Plot RT60 for each frequency range
+            frequencies = ['Low', 'Mid', 'High']
+            rt60_values = [rt60_low, rt60_mid, rt60_high]
+            plt.bar(frequencies, rt60_values, color=['b', 'g', 'r'])
+            plt.title('RT60 for Low, Mid, and High Frequencies')
+            plt.ylabel('Time (s)')
+            plt.show()
+
+    def calculate_rt60(self, audio, sr, freq_range):
+        try:
+            # Apply a bandpass filter to isolate the desired frequency range
+            sos = signal.butter(4, freq_range, btype='bandpass', fs=sr, output='sos')
+            filtered_audio = signal.sosfilt(sos, audio)
+
+            # Calculate energy decay
+            energy = filtered_audio ** 2
+            cumulative_energy = np.cumsum(energy[::-1])[::-1]
+            initial_energy = cumulative_energy[0]
+            target_energy = initial_energy / 1000
+            below_target = np.where(cumulative_energy <= target_energy)[0]
+
+            if len(below_target) == 0:
+                return np.nan  # No point found where energy has decayed sufficiently
+
+            t60_index = below_target[0]
+            rt60 = t60_index / sr
+            return rt60
+        except Exception as e:
+            print(f"Error calculating RT60: {e}")
+            return np.nan
+
 # Main application entry point
 if __name__ == '__main__':
     root = tk.Tk()
     app = SPIDAMApp(root)
     root.mainloop()
-
