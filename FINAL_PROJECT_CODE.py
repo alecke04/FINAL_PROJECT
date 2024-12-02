@@ -33,6 +33,9 @@ class SPIDAMApp:
         self.plot_rt60_button = tk.Button(root, text='Plot RT60 (Low, Mid, High)', command=self.plot_rt60)
         self.plot_rt60_button.pack()
 
+        self.combined_plot_button = tk.Button(root, text='Combined RT60 Plot', command=self.combined_rt60_plot)
+        self.combined_plot_button.pack()
+
     def load_audio(self):
         file_path = filedialog.askopenfilename(filetypes=[('Audio Files', '*.wav *.mp3 *.m4a')])
         if file_path:
@@ -84,6 +87,22 @@ class SPIDAMApp:
             plt.bar(frequencies, rt60_values, color=['b', 'g', 'r'])
             plt.title('RT60 for Low, Mid, and High Frequencies')
             plt.ylabel('Time (s)')
+            plt.show()
+
+    def combined_rt60_plot(self):
+        if hasattr(self, 'audio'):
+            # Calculate RT60 for each frequency range
+            rt60_low = self.calculate_rt60(self.audio, self.sr, (60, 250))
+            rt60_mid = self.calculate_rt60(self.audio, self.sr, (800, 1200))
+            rt60_high = self.calculate_rt60(self.audio, self.sr, (5000, 10000))
+
+            # Plot combined RT60 values for Low, Mid, and High frequencies
+            frequencies = ['Low', 'Mid', 'High']
+            rt60_values = [rt60_low, rt60_mid, rt60_high]
+            plt.plot(frequencies, rt60_values, marker='o')
+            plt.title('Combined RT60 Plot')
+            plt.ylabel('Time (s)')
+            plt.xlabel('Frequency Range')
             plt.show()
 
     def calculate_rt60(self, audio, sr, freq_range):
