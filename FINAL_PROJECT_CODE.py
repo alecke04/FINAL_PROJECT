@@ -36,6 +36,11 @@ class SPIDAMApp:
         self.combined_plot_button = tk.Button(root, text='Combined RT60 Plot', command=self.combined_rt60_plot)
         self.combined_plot_button.pack()
 
+        # Extra Credit: Button to toggle RT60 plot visibility
+        self.toggle_rt60_button = tk.Button(root, text='Toggle RT60 Plots', command=self.toggle_rt60_plots)
+        self.toggle_rt60_button.pack()
+        self.rt60_plots_visible = False
+
     def load_audio(self):
         file_path = filedialog.askopenfilename(filetypes=[('Audio Files', '*.wav *.mp3 *.m4a')])
         if file_path:
@@ -127,6 +132,16 @@ class SPIDAMApp:
         except Exception as e:
             print(f"Error calculating RT60: {e}")
             return np.nan
+
+    def toggle_rt60_plots(self):
+        # Toggle visibility of RT60 plots
+        if self.rt60_plots_visible:
+            print("Hiding RT60 plots.")
+            self.rt60_plots_visible = False
+        else:
+            print("Showing RT60 plots.")
+            self.rt60_plots_visible = True
+            self.plot_rt60()
 
 # Main application entry point
 if __name__ == '__main__':
